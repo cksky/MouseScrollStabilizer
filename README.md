@@ -1,5 +1,5 @@
 # MouseScrollStabilizer
-This project aims to address the issue of frequent jittering back and forth when scrolling up and down with a mouse, caused by a damaged or worn-out scroll wheel.
+This project is a mouse wheel stabilizer tool designed to address the frequent issue of erratic jumps when scrolling up and down with the mouse wheel.
 
 ## How It Works
 1. Time Threshold: If a reverse scroll event occurs within the threshold time after the last scroll event, it will be blocked.
