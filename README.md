@@ -7,6 +7,9 @@ This project aims to address the issue of frequent jittering back and forth when
 3. This effectively prevents accidental scrolling caused by mouse wheel jitter
 
 ## Usage Instructions
+For your convenience, I have also packaged an executable file, which you can download from the Release section.
+
+Below are the usage instructions for the .py file.
 1. Install the Python runtime environment. Download link: https://www.python.org/downloads/windows/
 2. Download the MouseScrollStabilizer.py file.
 3. Right-click the file, select "Open with," and set the default program to pythonw.
@@ -22,6 +25,9 @@ This project aims to address the issue of frequent jittering back and forth when
 3. 这样可以有效防止因鼠标滚轮抖动导致的意外滚动。
 
 ## 使用说明
+为了方便使用，我另外打包了一个.exe文件，在Release里自行下载。
+
+以下为.py文件的使用方式
 1. 安装python运行环境，下载地址: https://www.python.org/downloads/windows/
 2. 下载MouseScrollStabilizer.py文件
 3. 右键选择打开方式，将打开方式设置为pythonw
