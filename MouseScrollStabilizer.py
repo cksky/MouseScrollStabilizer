@@ -135,16 +135,51 @@ class Translator:
 # =========================
 class IniSettings:
     def __init__(self, org_name, app_name):
-        self.file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config", f"{app_name}.ini")
+        # 修复打包后的路径问题
+        if getattr(sys, 'frozen', False):
+            # 打包后的情况
+            base_path = os.path.dirname(sys.executable)
+        else:
+            # 开发时的情况
+            base_path = os.path.dirname(os.path.abspath(__file__))
+            
+        self.file_path = os.path.join(base_path, "config", f"{app_name}.ini")
         self.config = configparser.ConfigParser()
         self._load_settings()
 
     def _load_settings(self):
+        # 确保目录存在
+        os.makedirs(os.path.dirname(self.file_path), exist_ok=True)
+        
         if os.path.exists(self.file_path):
-            self.config.read(self.file_path)
+            self.config.read(self.file_path, encoding='utf-8')
+        else:
+            # 如果文件不存在，创建默认配置
+            self._create_default_config()
+
+    def _create_default_config(self):
+        """创建默认配置文件"""
+        # 添加默认配置节
+        if not self.config.has_section('General'):
+            self.config.add_section('General')
+        
+        # 设置默认值
+        self.config.set('General', 'block_interval', '0.5')
+        self.config.set('General', 'direction_change_threshold', '3')
+        self.config.set('General', 'enabled', 'True')
+        self.config.set('General', 'start_on_boot', 'False')
+        self.config.set('General', 'language', 'zh_CN')
+        
+        # 保存配置
+        self.sync()
 
     def value(self, key, default=None, type=None):
         section, option = self._parse_key(key)
+        
+        # 如果节不存在，创建它
+        if not self.config.has_section(section):
+            self.config.add_section(section)
+            
         if self.config.has_option(section, option):
             val = self.config.get(section, option)
             if type == int:
@@ -154,6 +189,12 @@ class IniSettings:
             elif type == bool:
                 return val.lower() == 'true'
             return val
+        
+        # 如果选项不存在，设置默认值
+        if default is not None:
+            self.setValue(key, default)
+            return default
+            
         return default
 
     def setValue(self, key, value):
@@ -169,8 +210,9 @@ class IniSettings:
         return 'General', key
 
     def sync(self):
+        # 确保目录存在
         os.makedirs(os.path.dirname(self.file_path), exist_ok=True)
-        with open(self.file_path, 'w') as configfile:
+        with open(self.file_path, 'w', encoding='utf-8') as configfile:
             self.config.write(configfile)
 
 # ===============
@@ -221,7 +263,14 @@ def configure_startup(enable: bool):
     """Create or remove HKCU Run entry for this script."""
     run_key = r"SOFTWARE\Microsoft\Windows\CurrentVersion\Run"
     name = "MouseScrollLock"
-    path = f'"{sys.executable}" "{os.path.abspath(__file__)}"'
+    
+    # 修复打包后的路径问题
+    if getattr(sys, 'frozen', False):
+        # 打包后的情况
+        path = f'"{sys.executable}"'
+    else:
+        # 开发时的情况
+        path = f'"{sys.executable}" "{os.path.abspath(__file__)}"'
     
     try:
         if enable:
