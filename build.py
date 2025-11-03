@@ -22,7 +22,7 @@ def build_exe():
 
     # PyInstaller 配置
     opts = [
-        '111.py',  # 主程序文件
+        'MouseScrollStabilizer.py',  # 主程序文件
         '--name=MouseScrollStabilizer',  # 输出名称
         '--onefile',  # 打包成单个exe文件
         '--windowed',  # 不显示控制台窗口
