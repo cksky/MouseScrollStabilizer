@@ -7,11 +7,9 @@ from PyInstaller.__main__ import run
 def build_exe():
     # 检查图标文件是否存在
     if not os.path.exists('icon.ico'):
-        print("警告: 未找到 icon.ico 文件，将使用默认图标")
-        icon_option = []
-    else:
-        icon_option = ['--icon=icon.ico']
-
+        print("错误: 未找到 icon.ico 文件，请确保图标文件存在于当前目录")
+        return
+    
     # 清理之前的构建文件
     if os.path.exists('build'):
         shutil.rmtree('build')
@@ -27,6 +25,7 @@ def build_exe():
         '--onefile',  # 打包成单个exe文件
         '--windowed',  # 不显示控制台窗口
         '--add-data=config;config',  # 包含配置目录（如果存在）
+        '--add-data=icon.ico;.',  # 包含图标文件
         '--hidden-import=win32timezone',  # 隐藏导入
         '--hidden-import=win32gui',
         '--hidden-import=win32con', 
@@ -34,7 +33,8 @@ def build_exe():
         '--hidden-import=psutil',
         '--uac-admin',  # 请求管理员权限
         '--clean',  # 清理临时文件
-    ] + icon_option  # 添加图标选项
+        '--icon=icon.ico',  # 设置exe文件图标
+    ]
 
     # 运行打包
     run(opts)
