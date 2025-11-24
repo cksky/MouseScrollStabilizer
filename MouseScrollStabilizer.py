@@ -40,14 +40,14 @@ class Translator:
                 'startup': '开机自动启动',
                 'status': '实时状态',
                 'total_events': '总滚轮事件:',
-                'blocked_events': '已拦截事件:',
+                'blocked_events': '已修正事件:',
                 'current_direction': '当前方向:',
                 'direction_up': '↑ 向上',
                 'direction_down': '↓ 向下',
                 'direction_none': '无',
                 'status_label': '状态:',
                 'how_it_works': '工作原理',
-                'how_it_works_text': '''• 时间阈值：距离上次滚轮事件的时间在阈值内，如果出现反方向滚轮事件，则阻塞该事件
+                'how_it_works_text': '''• 时间阈值：距离上次滚轮事件的时间在阈值内，如果出现反方向滚轮事件，则修正该事件方向
 • 次数阈值：连续的反方向滚轮事件（每个事件距离上次滚轮时间在时间阈值内）达到次数阈值，则改变初始方向并允许此事件
 • 这样可以有效防止因鼠标滚轮抖动导致的意外滚动''',
                 'restart_hook': '重启钩子',
@@ -65,12 +65,13 @@ class Translator:
                 'hook_failed': '钩子启动失败',
                 'seconds': ' 秒',
                 'status_waiting': '等待滚轮事件',
-                'status_disabled': '拦截已关闭',
+                'status_disabled': '修正已关闭',
                 'status_initial_up': '初始方向: 向上',
                 'status_initial_down': '初始方向: 向下',
                 'status_same_direction': '同方向滚动',
                 'status_direction_changed': '方向改变 (连续{count}次)',
-                'status_blocked': '已拦截 (连续{current}/{threshold}次)'
+                'status_blocked': '已修正 (连续{current}/{threshold}次)',
+                'status_corrected': '已修正方向 (连续{current}/{threshold}次)'
             },
             'en_US': {
                 'app_title': 'Mouse Scroll Stabilizer',
@@ -81,14 +82,14 @@ class Translator:
                 'startup': 'Start Automatically at Boot',
                 'status': 'Real-time Status',
                 'total_events': 'Total Scroll Events:',
-                'blocked_events': 'Blocked Events:',
+                'blocked_events': 'Corrected Events:',
                 'current_direction': 'Current Direction:',
                 'direction_up': '↑ Up',
                 'direction_down': '↓ Down',
                 'direction_none': 'None',
                 'status_label': 'Status:',
                 'how_it_works': 'How It Works',
-                'how_it_works_text': '''• Time Threshold: If a reverse scroll event occurs within the threshold time after the last scroll event, it will be blocked
+                'how_it_works_text': '''• Time Threshold: If a reverse scroll event occurs within the threshold time after the last scroll event, its direction will be corrected
 • Count Threshold: When consecutive reverse scroll events (each within the time threshold) reach the count threshold, the initial direction changes and the event is allowed
 • This effectively prevents accidental scrolling caused by mouse wheel jitter''',
                 'restart_hook': 'Restart Hook',
@@ -106,12 +107,13 @@ class Translator:
                 'hook_failed': 'Hook Failed to Start',
                 'seconds': ' seconds',
                 'status_waiting': 'Waiting for scroll events',
-                'status_disabled': 'Blocking disabled',
+                'status_disabled': 'Correction disabled',
                 'status_initial_up': 'Initial direction: Up',
                 'status_initial_down': 'Initial direction: Down',
                 'status_same_direction': 'Same direction scrolling',
                 'status_direction_changed': 'Direction changed (consecutive {count} times)',
-                'status_blocked': 'Blocked (consecutive {current}/{threshold} times)'
+                'status_blocked': 'Corrected (consecutive {current}/{threshold} times)',
+                'status_corrected': 'Direction corrected (consecutive {current}/{threshold} times)'
             }
         }
         self.current_lang = 'zh_CN'
@@ -414,14 +416,22 @@ class MouseHook:
                         
                         return self.user32.CallNextHookEx(self.hook_id, nCode, wParam, lParam)
                     else:
-                        # suppress the jitter
+                        # 修改这里：不阻塞，而是修正事件方向
+                        # 创建新的mouseData，使用last_dir的方向但保持相同的绝对值
+                        new_delta = abs(delta_short) * self.last_dir
+                        new_mouseData = (ctypes.c_ushort(new_delta).value << 16) | (ms.mouseData & 0xFFFF)
+                        
+                        # 修改事件数据
+                        ms.mouseData = new_mouseData
+                        
                         self.blocked_events += 1
-                        self.current_direction = current_dir
-                        self.last_status = self.translator.tr('status_blocked', 
+                        self.current_direction = self.last_dir  # 显示修正后的方向
+                        self.last_status = self.translator.tr('status_corrected', 
                                                              current=self._consecutive_opposite_events, 
                                                              threshold=self.direction_change_threshold)
                         
-                        return 1  # block
+                        # 继续传递修改后的事件
+                        return self.user32.CallNextHookEx(self.hook_id, nCode, wParam, lParam)
 
             return self.user32.CallNextHookEx(self.hook_id, nCode, wParam, lParam)
 
