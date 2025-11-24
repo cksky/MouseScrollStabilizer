@@ -133,6 +133,21 @@ class Translator:
         return text
 
 # =========================
+# Resource Path Helper
+# =========================
+def resource_path(relative_path):
+    """获取资源的绝对路径，兼容开发环境和打包后的环境"""
+    if hasattr(sys, '_MEIPASS'):
+        # 打包后的情况
+        base_path = sys._MEIPASS
+    else:
+        # 开发时的情况
+        base_path = os.path.dirname(os.path.abspath(__file__))
+    
+    path = os.path.join(base_path, relative_path)
+    return path
+
+# =========================
 # Custom INI Settings Class
 # =========================
 class IniSettings:
@@ -479,9 +494,15 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
         super().__init__(parent)
         self.main_window = main_window
         
-        # 设置托盘图标
-        app = QtWidgets.QApplication.instance()
-        self.setIcon(app.style().standardIcon(QtWidgets.QStyle.SP_ComputerIcon))
+        # 设置托盘图标 - 使用自定义图标
+        icon_path = resource_path('icon.ico')
+        if os.path.exists(icon_path):
+            self.setIcon(QtGui.QIcon(icon_path))
+        else:
+            # 如果找不到自定义图标，使用默认图标
+            app = QtWidgets.QApplication.instance()
+            self.setIcon(app.style().standardIcon(QtWidgets.QStyle.SP_ComputerIcon))
+            print(f"警告: 未找到图标文件 {icon_path}，使用默认图标")
         
         # 创建托盘菜单
         self.create_menu()
@@ -532,9 +553,15 @@ class ScrollLockApp(QtWidgets.QMainWindow):
         self.resize(450, 600)
         self.setMinimumSize(400, 550)
         
-        # 设置窗口图标
-        app = QtWidgets.QApplication.instance()
-        self.setWindowIcon(app.style().standardIcon(QtWidgets.QStyle.SP_ComputerIcon))
+        # 设置窗口图标 - 使用自定义图标
+        icon_path = resource_path('icon.ico')
+        if os.path.exists(icon_path):
+            self.setWindowIcon(QtGui.QIcon(icon_path))
+        else:
+            # 如果找不到自定义图标，使用默认图标
+            app = QtWidgets.QApplication.instance()
+            self.setWindowIcon(app.style().standardIcon(QtWidgets.QStyle.SP_ComputerIcon))
+            print(f"警告: 未找到图标文件 {icon_path}，使用默认图标")
         
         # 创建中央窗口部件
         central_widget = QtWidgets.QWidget()
@@ -550,8 +577,12 @@ class ScrollLockApp(QtWidgets.QMainWindow):
         
         # 应用图标
         app_icon = QtWidgets.QLabel()
-        app_icon.setPixmap(QtWidgets.QApplication.instance().style().standardIcon(
-            QtWidgets.QStyle.SP_ComputerIcon).pixmap(24, 24))
+        icon_path = resource_path('icon.ico')
+        if os.path.exists(icon_path):
+            app_icon.setPixmap(QtGui.QIcon(icon_path).pixmap(24, 24))
+        else:
+            app_icon.setPixmap(QtWidgets.QApplication.instance().style().standardIcon(
+                QtWidgets.QStyle.SP_ComputerIcon).pixmap(24, 24))
         title_layout.addWidget(app_icon)
         
         # 标题文本
